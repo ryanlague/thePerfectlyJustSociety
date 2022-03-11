@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import statistics
 
-#from impz_logger.decorators import profile
+
+# from impz_logger.decorators import profile
 
 
 class Person:
@@ -19,7 +20,7 @@ class Person:
     @property
     def numFlips(self):
         return self.numWins + self.numLosses
-    
+
 
 class CoinFlipper:
     def __init__(self, people, dollarsPerFlip, allowDebt, activeStats=0, activePlots=0):
@@ -37,7 +38,7 @@ class CoinFlipper:
     @property
     def moneyPerPerson(self):
         return [p.money for p in self.people]
-    
+
     def sorted(self):
         self.people = sorted(self.people, key=lambda x: x.money)
         return self.people
@@ -68,11 +69,11 @@ class CoinFlipper:
                     t=0.1,
                     plotType='percentages',
                     title=f"Num People: {len(self.people):,}\nNum Flips: {self.numFlips:,}\nStart: ${self.startMoney}\n${self.dollarsPerFlip} per flip")
-    
+
     def getStatsAboutTopX(self, topX):
         people = sorted(self.people, key=lambda p: p.money)
         total_money = sum([p.money for p in people])
-        num_people_in_top_x = int(len(people) * (topX/100))
+        num_people_in_top_x = int(len(people) * (topX / 100))
         top_x_raw = people[len(people) - num_people_in_top_x:]
         if len(top_x_raw) > 0:
             top_x_total_money = sum([p.money for p in top_x_raw])
@@ -121,7 +122,8 @@ class CoinFlipper:
         stats.append(f"Total Money: {total_money:,}")
         stats.append(f"Total People: {len(self.people):,}")
 
-        mean, median, mode = statistics.mean(self.moneyPerPerson), statistics.median(self.moneyPerPerson), statistics.mode(self.moneyPerPerson)
+        mean, median, mode = statistics.mean(self.moneyPerPerson), statistics.median(
+            self.moneyPerPerson), statistics.mode(self.moneyPerPerson)
         self.stats['mean'].append(mean)
         self.stats['median'].append(median)
         self.stats['mode'].append(mode)
@@ -145,20 +147,21 @@ class CoinFlipper:
 
         if printIt:
             print(f"\n{'-' * 10}STATS (after {self.numFlips:,} flips){'-' * 10}")
-            print(f'\n{stats_string}')    
+            print(f'\n{stats_string}')
         return stats_string
-    
+
     def printStats(self, n):
         print(f"\n{'-' * 10}STATS (after {n:,} flips){'-' * 10}")
         print(f'\n{self.getStats()}')
-        return 
+        return
 
 
 def buildPeople(n, startMoney):
     return [Person(i, startMoney) for i in range(n)]
 
 
-def main(numFlips=100, numPeople=1000, startMoney=1000, dollarsPerFlip=100, activePlots=1_000, activeStats=100_000, endPlot=False, allowDebt=False, updateEvery=1):
+def main(numFlips=100, numPeople=1000, startMoney=1000, dollarsPerFlip=100, activePlots=1_000, activeStats=100_000,
+         endPlot=False, allowDebt=False, updateEvery=1):
     people = buildPeople(numPeople, startMoney)
 
     flipper = CoinFlipper(people, dollarsPerFlip, allowDebt, activeStats=activeStats, activePlots=activePlots)
@@ -166,17 +169,15 @@ def main(numFlips=100, numPeople=1000, startMoney=1000, dollarsPerFlip=100, acti
     for n in range(numFlips):
 
         flipper.flip()
-    
+
         if not activeStats:
             if n % updateEvery == 0:
-                print(f"Completed: {n+1:,} / {numFlips:,} flips", end='\r' if n < numFlips-1 else '\n')
-
+                print(f"Completed: {n + 1:,} / {numFlips:,} flips", end='\r' if n < numFlips - 1 else '\n')
 
     flipper.getStats(printIt=True)
     if endPlot:
         if activePlots:
             plt.close()
-
 
         flipper.plot(t=10)
         plt.close()
@@ -184,6 +185,7 @@ def main(numFlips=100, numPeople=1000, startMoney=1000, dollarsPerFlip=100, acti
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-flips', type=int, default=1000, help='Number of flips')
     parser.add_argument('-people', type=int, default=1000, help='Number of people')
@@ -195,5 +197,5 @@ if __name__ == '__main__':
     parser.add_argument('-allowDebt', action='store_true', help='Allow people to have less than $0')
 
     args = parser.parse_args()
-    main(numFlips=args.flips, numPeople=args.people, startMoney=args.startMoney, dollarsPerFlip=args.bet, 
+    main(numFlips=args.flips, numPeople=args.people, startMoney=args.startMoney, dollarsPerFlip=args.bet,
          activePlots=args.activePlots, activeStats=args.activeStats, endPlot=args.plot, allowDebt=args.allowDebt)
