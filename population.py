@@ -3,6 +3,7 @@
 import random
 from collections.abc import Sequence
 import statistics
+import sys
 
 # Third-Party
 import matplotlib.pyplot as plt
@@ -11,16 +12,22 @@ from tqdm import tqdm
 
 
 class Person:
-    def __init__(self, idNum, money):
+    def __init__(self, idNum, money: int, population):
         self.idNum = idNum
-        self.money = money
-        self.startMoney = money
+        self.money = int(money)
+        self.startMoney = int(money)
         self.numWins = 0
         self.numLosses = 0
+        self.population = population
 
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.idNum:,} | ${self.money:,} | Flips: {self.numFlips:,} " \
                f"({self.numWins:,} - {self.numLosses:,})>"
+
+    def toDict(self):
+        exclude = 'population'
+        d = self.__dict__.copy()
+        return {k: v for k, v in d.items() if k not in exclude}
 
     @property
     def numFlips(self):
@@ -31,12 +38,11 @@ class Person:
 
 
 class Population(Sequence):
-    def __init__(self, people, parent=None):
-        self.people = people
+    def __init__(self, people=None, parent=None):
+        self.people = people or []
         self._parent = parent
-        self._currentPlotAx = None
-
         self._iterator = None
+        self._currentPlotAx = None
 
     def __repr__(self):
         return f"<{self.__class__.__name__} Num: {len(self.people)}>"
@@ -50,6 +56,21 @@ class Population(Sequence):
     def __getitem__(self, item):
         return self.people[item]
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_iterator'] = None
+        return state
+
+    def __setstate__(self, d):
+        self.__dict__ = d
+
+    def getMoneyStamp(self):
+        return [p.money for p in self.people]
+
+    def toDf(self):
+        people = [p.toDict() for p in self.people]
+        return pd.DataFrame(people)
+
     @property
     def parent(self):
         if self._parent:
@@ -62,11 +83,16 @@ class Population(Sequence):
             def _iter():
                 for p in self:
                     yield p
-                if loop:
-                    yield from _iter()
 
             self._iterator = _iter()
-        return next(self._iterator, default)
+        res = next(self._iterator, None)
+        if res:
+            return res
+        elif loop:
+            self._iterator = None
+            return self.next(loop=loop, default=default)
+        else:
+            return default
 
     @property
     def moneyPerPerson(self):
@@ -78,11 +104,11 @@ class Population(Sequence):
 
     @property
     def percentPopulationOfParent(self):
-        return len(self) / len(self.parent)
+        return len(self) / len(self.parent) * 100
 
     @property
     def percentWealthOfParent(self):
-        return self.totalMoney / self.parent.totalMoney
+        return self.totalMoney / self.parent.totalMoney * 100
 
     @property
     def meanWealth(self):
@@ -101,22 +127,32 @@ class Population(Sequence):
         return max(self.moneyPerPerson)
 
     def add(self, n, startMoney):
-        self.people.extend([Person(i, startMoney) for i in tqdm(range(n), desc='Adding people to population')])
+        self.people.extend([Person(i, startMoney, population=self) for i in tqdm(range(n),
+                                                                                 desc='Adding people to population')])
         return self
+
+    def addOne(self, startMoney):
+        i = len(self)
+        self.people.append(Person(i, startMoney, population=self))
 
     def sortedByWealth(self, ascending=False):
         return Population(sorted(self.people, key=lambda x: x.money, reverse=not ascending))
 
-    def getWealthiest(self, n):
-        sorted_by_wealth = self.sortedByWealth()
+    def getWealthiest(self, n, least=False):
+        """Get the people in the population with the most (or least) money
+            Args:
+                n: The number of people to get
+                least: If True, get the least wealthy instead of the most wealthy
+        """
+        sorted_by_wealth = self.sortedByWealth(ascending=least)
         if n <= len(self):
             top = sorted_by_wealth[:] if n == len(self) else sorted_by_wealth[:n]
             return Population(top, parent=self)
         else:
             raise Exception(f"Can not get {n} wealthiest from {self}. It only has {len(self)} people")
 
-    def getWealthiestXPercent(self, topX):
-        pop = self.sortedByWealth()
+    def getWealthiestXPercent(self, topX, least=False):
+        pop = self.sortedByWealth(ascending=least)
         num_people_in_top_x = round(len(pop) * (topX / 100))
         return self.getWealthiest(num_people_in_top_x)
 
@@ -125,12 +161,12 @@ class Population(Sequence):
         this_range = pop[round(len(pop) * highPercent / 100): round(len(pop) * lowPercent / 100)]
         return Population(this_range, parent=self)
 
-
     def pickRandoms(self, numRandoms):
         return random.sample(self.people, numRandoms)
 
     def statsDict(self, **kwargs):
         return {
+            'total': self.totalMoney,
             'mean': self.meanWealth,
             'median': self.medianWealth,
             'min': self.minWealth,

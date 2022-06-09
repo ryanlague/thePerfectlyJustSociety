@@ -1,36 +1,60 @@
 
-# Third-Party
+# Built-In Python
+import statistics
+from pathlib import Path
+import pickle
+from collections.abc import Sequence
 import random
 
+# Third-Party
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from fire import Fire
 
 # Custom
 from population import Population
+from flips import Flips, Flip
+from impz_logger.decorators import profile
 
 
-class Flip:
-    def __init__(self, winner, loser, bet):
-        self.winner = winner
-        self.loser = loser
-        self.bet = bet
-        self.settled = False
+class History:
+    def __init__(self):
+        self.moneyStamps = []
+        self.numFlips = []
+        self.populations = []
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} +{self.winner} -{self.loser} (${self.bet:,})>"
+        return f"<{self.__class__.__name__} | Entries: {len(self)}>"
 
-    def settleBet(self):
-        if not self.settled:
-            self.loser.money -= self.bet
-            self.loser.numLosses += 1
+    def __len__(self):
+        return len(self.moneyStamps)
 
-            self.winner.money += self.bet
-            self.winner.numWins += 1
+    def add(self, moneyStamp, numFlips, pop):
+        self.moneyStamps.append(moneyStamp)
+        self.numFlips.append(numFlips)
+        self.populations.append(pop)
 
-            self.settled = True
-        else:
-            raise Exception(f"Can not settle a bet twice")
+    def toDf(self, includeStats=True):
+        data = []
+        for i in tqdm(range(len(self)), desc=f'Converting {self} to df'):
+            row = self.moneyStamps[i]
+            row_data = {str(person_id): money for person_id, money in enumerate(row)}
+            row_data.update({'numFlips': self.numFlips[i]})
+            if includeStats:
+                row_data.update({
+                    'total': sum(row),
+                    'max': max(row),
+                    'min': min(row),
+                    'mean': statistics.mean(row),
+                    'median': statistics.median(row)
+                })
+            data.append(row_data)
+        print('Initializing DF...')
+        df = pd.DataFrame(data).set_index('numFlips', drop=False)
+        print('Done!')
+        return df
 
 
 class CoinFlipper:
@@ -41,7 +65,8 @@ class CoinFlipper:
         self.allowDebt = allowDebt
         self.selectionStyle = selectionStyle
 
-        self.flips = []
+        self.flips: Flips = Flips()
+        self.history: History = History()
 
     def __repr__(self):
         return f"<{self.__class__.__name__}>"
@@ -50,12 +75,15 @@ class CoinFlipper:
     def numFlips(self):
         return len(self.flips)
 
-    def flip(self, num: int = 1, plotEvery=10_000):
+    def flip(self, num: int = 1, plotEvery=10_000, logHistory=True):
         """Flip a coin some number of times and settle the bets"""
         for i in tqdm(range(num), total=num, unit='flips', desc='Flipping Coins'):
             self.flipOnce()
+            if logHistory:
+                self.history.add(self.population.getMoneyStamp(), i + 1, self.population.toDf())
             if plotEvery and (i + 1) % plotEvery == 0:
-                self.population.plot(t=0.1, title=f'Population after {i + 1:,} flips')
+                self.population.plot(t=0.1, title=f'Population after {i + 1:,} flips '
+                                                  f'(Total: ${self.population.totalMoney:,})')
 
     def flipOnce(self):
         # Pick 2 random people from the group to "flip" against each other
@@ -79,18 +107,52 @@ class CoinFlipper:
         else:
             raise Exception(f"Unknown selectionStyle: {self.selectionStyle}")
 
+    def save(self, filepath):
+        filepath = Path(filepath)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(str(filepath), 'wb') as pf:
+            pickle.dump(self, pf)
+        print(f'Saved to {filepath}')
 
-def main(numFlips=100_000_000, numPeople=1000, startMoney=100, dollarsPerFlip=1, allowDebt=True, plot=True):
+    @classmethod
+    def load(cls, filepath):
+        filepath = Path(filepath)
+        if filepath.exists():
+            flipper: cls
+            with open(str(filepath), 'rb') as pf:
+                flipper = pickle.load(pf)
+            return flipper
+        else:
+            raise Exception(f"Filepath does not exist")
 
-    people = Population([])
-    people.add(numPeople, startMoney)
 
-    flipper = CoinFlipper(people, dollarsPerFlip, allowDebt)
-    flipper.flip(numFlips)
+@profile()
+def do_the_flips(flipper, numFlips, plotEvery=0):
+    """This is just here for profiling"""
+    flipper.flip(numFlips, plotEvery=plotEvery)
+    return flipper
 
+
+def main(numFlips=1_000_000, numPeople=1000, startMoney=100, dollarsPerFlip=10, allowDebt=True, plot=False, useCache=True):
+
+    flipper_path = Path(f'saved_flippers/people_{numPeople}_start_{startMoney}_bet_{dollarsPerFlip}_debt_{allowDebt}_'
+                        f'flips_{numFlips}.pickle')
+    if useCache and flipper_path.exists():
+        flipper = CoinFlipper.load(flipper_path)
+    else:
+        people = Population([])
+        people.add(numPeople, startMoney)
+
+        flipper = CoinFlipper(people, dollarsPerFlip, allowDebt)
+        do_the_flips(flipper, numFlips=numFlips, plotEvery=10_000 if plot else 0)
+        flipper.save(flipper_path)
+
+    print('Done flipping!')
     if plot:
-        people.plot(t=10)
+        flipper.population.plot()
         plt.close()
+
+    flipper.history.toDf()
 
 
 if __name__ == '__main__':
