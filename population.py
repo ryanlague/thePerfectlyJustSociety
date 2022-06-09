@@ -1,4 +1,3 @@
-
 # Built-In Python
 import random
 from collections.abc import Sequence
@@ -12,12 +11,12 @@ from tqdm import tqdm
 
 
 class Person:
-    def __init__(self, idNum, money: int, population):
+    def __init__(self, idNum, startMoney: int, money: int = None, numWins=0, numLosses=0, population=None):
         self.idNum = idNum
+        self.startMoney = int(startMoney)
         self.money = int(money)
-        self.startMoney = int(money)
-        self.numWins = 0
-        self.numLosses = 0
+        self.numWins = numWins
+        self.numLosses = numLosses
         self.population = population
 
     def __repr__(self):
@@ -64,6 +63,11 @@ class Population(Sequence):
     def __setstate__(self, d):
         self.__dict__ = d
 
+    @classmethod
+    def fromDf(cls, df):
+        people = [Person(**row) for i, row in df.iterrows()]
+        return cls(people)
+
     def getMoneyStamp(self):
         return [p.money for p in self.people]
 
@@ -104,11 +108,11 @@ class Population(Sequence):
 
     @property
     def percentPopulationOfParent(self):
-        return len(self) / len(self.parent) * 100
+        return len(self) / len(self.parent or self) * 100
 
     @property
     def percentWealthOfParent(self):
-        return self.totalMoney / self.parent.totalMoney * 100
+        return self.totalMoney / (self.parent or self).totalMoney * 100
 
     @property
     def meanWealth(self):
@@ -127,13 +131,13 @@ class Population(Sequence):
         return max(self.moneyPerPerson)
 
     def add(self, n, startMoney):
-        self.people.extend([Person(i, startMoney, population=self) for i in tqdm(range(n),
-                                                                                 desc='Adding people to population')])
+        self.people.extend([Person(i, startMoney, startMoney, population=self)
+                            for i in tqdm(range(n), desc='Adding people to population')])
         return self
 
     def addOne(self, startMoney):
         i = len(self)
-        self.people.append(Person(i, startMoney, population=self))
+        self.people.append(Person(i, startMoney, startMoney, population=self))
 
     def sortedByWealth(self, ascending=False):
         return Population(sorted(self.people, key=lambda x: x.money, reverse=not ascending))
@@ -178,13 +182,13 @@ class Population(Sequence):
 
     def getStatsByTopX(self, percentages=None):
         top_x_percentages = percentages or [1, 2, 3, 5, 10, 25, 50, 75, 90, 99, 100]
-        stats = [self.getWealthiestXPercent(x).statsDict() for x in top_x_percentages]
+        stats = [self.getWealthiestXPercent(x).statsDict(top_x=x) for x in top_x_percentages]
         return pd.DataFrame(stats)
 
     def getStatsByTopXRanges(self, percentages=None):
         top_x_percentages = percentages or range(101)
         stats = [self.getWealthRangeByPercent(lowPercent=top_x_percentages[i + 1], highPercent=p)
-                     .statsDict(top_x_percent_low=top_x_percentages[i + 1], top_x_percent_high=p)
+                     .statsDict(top_x_percent_low=int(top_x_percentages[i + 1]), top_x_percent_high=int(p))
                  for i, p in enumerate(top_x_percentages[:-1])]
         return pd.DataFrame(stats)
 
