@@ -49,8 +49,8 @@ def update(set_progress, wealth_distribution_dropdown_value, history_dropdown_va
         if numCoinFlipClicks > 0 else ''
 
     # Whatever button was hit, we always update the graph
-    population_fig = getUpdatedGraph(wealth_distribution_dropdown_value, 'wealth_distribution', flipper=flipper)
-    history_fig = getUpdatedGraph(history_dropdown_value, 'flip_history', flipper=flipper)
+    population_fig = getUpdatedGraph(wealth_distribution_dropdown_value, flipper=flipper)
+    history_fig = getUpdatedGraph(history_dropdown_value, flipper=flipper)
 
     return population_fig, history_fig, message
 
