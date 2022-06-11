@@ -71,9 +71,13 @@ class Population(Sequence):
     def getMoneyStamp(self):
         return [p.money for p in self.people]
 
-    def toDf(self):
+    def toDf(self, sortBy=None):
         people = [p.toDict() for p in self.people]
-        return pd.DataFrame(people)
+        df = pd.DataFrame(people)
+        if sortBy:
+            df = df.sort_values(by=sortBy, ascending=False).reset_index(drop=True)
+            df[f'rank_by_{sortBy}'] = range(1, len(df) + 1)
+        return df
 
     @property
     def parent(self):
