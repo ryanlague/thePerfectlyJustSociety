@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 import uuid
 
-from app import Flipper, getUpdatedGraph, INCLUDE_TOP_X
+from app import FlipperManager, getUpdatedGraph, INCLUDE_TOP_X
 from pollableThread import PollableCoinFlipper
 from impz_logger.decorators import profile
 
@@ -22,7 +22,7 @@ def update(set_progress, wealth_distribution_dropdown_value, history_dropdown_va
     progress_callback(0.0)
     # The most recent flipper
     flipper_path = FLIPPER_PATH
-    flipper = Flipper.get(flipper_path)
+    flipper = FlipperManager.get(flipper_path)
     # In-Progress flips will be saved to this path, so if the process is cancelled,
     # the previous flipper is not corrupted
     in_progress_dir = FLIPPER_PATH.parent.joinpath('tmp')
@@ -36,9 +36,9 @@ def update(set_progress, wealth_distribution_dropdown_value, history_dropdown_va
     # Regularly poll the thread and update the progress bar
     thread.pollEvery(0.5, progress_callback, pollAtStart=True)
     # The newly updated flipper
-    flipper = Flipper.get(in_progress_path)
+    flipper = FlipperManager.get(in_progress_path)
     # Overwrite the old flipper
-    Flipper.save(flipper, FLIPPER_PATH)
+    FlipperManager.save(flipper, FLIPPER_PATH)
     # Delete the in-progress file.
     # This method is cancellable with no cleanup method (Dash limitation)
     # So we delete the whole directory, which will also clean old, missed files

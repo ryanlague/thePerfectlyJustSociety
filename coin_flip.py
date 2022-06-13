@@ -168,7 +168,8 @@ class CoinFlipper:
                 # This is a tmp solution until I can dig into the pickling / unpickling procedures
                 history_path = filepath.with_stem(f'{filepath.stem}_history')
                 if history_path.exists():
-                    logging.debug('Warning: Flipper history stats were not loaded correctly. Manually loading now')
+                    logging.debug(
+                        'Warning: FlipperManager history stats were not loaded correctly. Manually loading now')
                     flipper.history.stats = pd.read_pickle(str(history_path))
             return flipper
         else:
