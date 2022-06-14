@@ -1,5 +1,7 @@
-.idea/
-__pycache__/
-profile/
-flipperCache/
-cache/
+*.idea/
+*__pycache__/
+*profile/
+*flipperCache/
+*cache/
+*build/
+*.egg-info
