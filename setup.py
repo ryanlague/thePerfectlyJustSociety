@@ -17,6 +17,7 @@ setup(
         'tqdm',
         'matplotlib',
         'fire',
-        'dash[diskcache]'
+        'dash[diskcache]',
+        'fire'
     ]
 )

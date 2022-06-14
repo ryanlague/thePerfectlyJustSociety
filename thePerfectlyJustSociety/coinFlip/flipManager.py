@@ -3,8 +3,8 @@ import logging
 from pathlib import Path
 from flask import request
 
-from coinFlip import CoinFlipper, Flips, Flip, History
-from population import Population
+from .coinFlip import CoinFlipper, Flips, Flip, History
+from .population import Population
 
 
 class FlipperManager:

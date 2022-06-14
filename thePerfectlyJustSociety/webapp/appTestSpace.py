@@ -3,8 +3,8 @@ import shutil
 from pathlib import Path
 import uuid
 
-from app import FlipperManager, getUpdatedGraph, INCLUDE_TOP_X
-from pollableThread import PollableCoinFlipper
+from main import FlipperManager, getUpdatedGraph, INCLUDE_TOP_X
+from thePerfectlyJustSociety.coinFlip.pollableThread import PollableCoinFlipper
 
 FLIPPER_PATH = Path('flipperCache/session_xyz/THE_BEST_FLIPPER.pickle')
 

@@ -1,5 +1,6 @@
 
 # Built-In Python
+import time
 from pathlib import Path
 import pickle
 import random
@@ -13,8 +14,8 @@ from tqdm import tqdm
 from fire import Fire
 
 # Custom
-from population import Population
-from flips import Flips, Flip
+from .population import Population
+from .flips import Flips, Flip
 
 
 class History:
@@ -78,11 +79,12 @@ class History:
 
 
 class CoinFlipper:
-    def __init__(self, population: Population, dollarsPerFlip: float, allowDebt: bool,
-                 selectionStyle: str = 'sequential', cacheDir='flipperCache'):
+    def __init__(self, population: Population, dollarsPerFlip: int = 1, allowDebt: bool = False, brokeIsOut=True,
+                 selectionStyle: str = 'random', cacheDir='flipperCache/cli'):
         self.population = population
-        self.dollarsPerFlip = dollarsPerFlip
+        self.dollarsPerFlip = int(dollarsPerFlip)
         self.allowDebt = allowDebt
+        self.brokeIsOut = brokeIsOut
         self.selectionStyle = selectionStyle
 
         self.cacheDir = Path(cacheDir)
@@ -103,18 +105,23 @@ class CoinFlipper:
     def numFlips(self):
         return len(self.flips)
 
-    def flip(self, num: int = 1, saveEvery=0, plotEvery=0, logProgress=False):
+    def flip(self, num: int = 1, saveEvery=0, plotEvery=0, plotKind='topXPercentRanges', logProgress=False,
+             saveHistory=True, closePlt=True):
         """Flip a coin some number of times and settle the bets"""
         for i in tqdm(range(num), total=num, unit='flips', desc='Flipping Coins', disable=not logProgress):
             self.flipOnce()
-            self.history.add(self.population, numFlips=len(self.flips))
+
+            if saveHistory:
+                self.history.add(self.population, numFlips=len(self.flips))
 
             if saveEvery and len(self.flips) > 0 and len(self.flips) % saveEvery == 0:
                 filepath = self.descriptiveFilepath(self.cacheDir)
                 self.save(filepath, history=True)
             if plotEvery and len(self.flips) % plotEvery == 0:
-                self.population.plot(t=0.1, title=f'Population after {i + 1:,} flips '
-                                                  f'(Total: ${self.population.totalMoney:,})')
+                self.population.plot(t=0.1, keepAx=True, kind=plotKind,
+                                     title=f'Population after {i + 1:,} flips (Total: ${self.population.totalMoney:,})')
+        if closePlt:
+            plt.close()
 
     def flipOnce(self):
         # Pick 2 random people from the group to "flip" against each other
@@ -130,10 +137,13 @@ class CoinFlipper:
             flip.settleBet()
 
     def getPeople(self, n):
+        pop = self.population.getPeopleWithMoreThan(0) if self.brokeIsOut else self.population
         if self.selectionStyle == 'random':
-            return self.population.pickRandoms(n)
+            return pop.pickRandoms(n)
         elif self.selectionStyle == 'sequential':
-            nex = [self.population.next(loop=True) for _ in range(n)]
+            if self.brokeIsOut:
+                raise Exception(f'Can not use sequential selection when brokeIsOut is set to True.')
+            nex = [pop.next(loop=True) for _ in range(n)]
             return nex
         else:
             raise Exception(f"Unknown selectionStyle: {self.selectionStyle}")
@@ -175,29 +185,38 @@ class CoinFlipper:
             raise Exception(f"Filepath does not exist")
 
 
-def main(numFlips=100, numPeople=1000, startMoney=100, dollarsPerFlip=10, allowDebt=True, plot=False,
-         useCache=False):
-    flipper_path = Path(f'flipperCache/people_{numPeople}_start_{startMoney}_bet_{dollarsPerFlip}_debt_{allowDebt}_'
-                        f'flips_{numFlips}.pickle')
-    if useCache and flipper_path.exists():
-        flipper = CoinFlipper.load(flipper_path)
-    else:
-        people = Population([])
-        people.add(numPeople, startMoney)
+def flipCoins(numFlips=10_000, numPeople=1000, startMoney=100, dollarsPerFlip=1, allowDebt=False,
+              plot=False, plotEvery=100, saveHistory=False, showResults=True, plotKind='topXPercentRanges',
+              useCache=False):
 
-        flipper = CoinFlipper(people, dollarsPerFlip, allowDebt)
-        flipper.flip(numFlips, saveEvery=1_000, plotEvery=10_000 if plot else 0)
+    people = Population([])
+    people.add(numPeople, startMoney)
+
+    flipper = CoinFlipper(people, dollarsPerFlip, allowDebt)
+    flipper.flip(numFlips, saveEvery=0, plotEvery=plotEvery if plot else 0, logProgress=True, saveHistory=saveHistory,
+                 plotKind=plotKind, closePlt=False)
+
+    if useCache:
+        cache_dir = Path('flipperCache/cli')
+        flipper_path = cache_dir.joinpath(
+            f'people_{numPeople}_start_{startMoney}_bet_{dollarsPerFlip}_debt_{allowDebt}_'
+            f'flips_{numFlips}.pickle')
         flipper.save(flipper_path)
 
-        new_flip = CoinFlipper.load(filepath=flipper_path)
+    if showResults:
+        print()
+        print('Results:')
+        print(flipper.population.getStatsByTopXRanges())
 
     print('Done flipping!')
     if plot:
-        flipper.population.plot()
-        plt.close()
+        flipper.population.plot(kind=plotKind, keepAx=True,
+                                title=f'Population after {len(flipper.flips):,} flips '
+                                      f'(Total: ${flipper.population.totalMoney:,})')
 
-    flipper.history.getStatsOverTime()
+    if len(flipper.history):
+        flipper.history.getStatsOverTime()
 
 
 if __name__ == '__main__':
-    Fire(main)
+    Fire(flipCoins)

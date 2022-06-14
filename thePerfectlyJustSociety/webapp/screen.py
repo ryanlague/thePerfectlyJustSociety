@@ -3,10 +3,10 @@ import logging
 import plotly.graph_objects as go
 from dash import html
 from dash.dependencies import Input, Output, State
-from style import Style
-from dropdownOption import DropdownOption
+from .style import Style
+from .dropdownOption import DropdownOption
 
-from coinFlip import CoinFlipper
+from thePerfectlyJustSociety.coinFlip.coinFlip import CoinFlipper
 
 
 class Screen:
@@ -183,7 +183,8 @@ class Screen:
     def updateWealthDistributionGraph(self, dropdownVal, flipper: CoinFlipper):
         if flipper:
             top_1 = flipper.population.getWealthiestXPercent(topX=1).percentWealthOfParent
-            text = f'After {len(flipper.flips)} flips, the top 1% wealthiest people have ' \
+            text = f'Even though opportunities were given out at random, \n' \
+                   f'after {len(flipper.flips)} flips, the top 1% wealthiest people have ' \
                    f'{round(top_1, 2):,}% of the total wealth.\n' \
                    f'Was our egalitarian society effective?\nWhat should we change?'
             self.wealthDistributionText = self._sanitizeTextForHTML(text)

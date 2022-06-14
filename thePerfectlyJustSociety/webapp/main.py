@@ -14,14 +14,14 @@ import plotly.graph_objects as go
 import diskcache
 
 # Custom
-from screen import Screen
-from pollableThread import PollableCoinFlipper
-from flipManager import FlipperManager
-from layout import Layout
-from style import Style
-from dropdownOption import DropdownOption
-from progress import make_progress_graph
-from explanation import Explanation
+from thePerfectlyJustSociety.coinFlip.pollableThread import PollableCoinFlipper
+from thePerfectlyJustSociety.coinFlip.flipManager import FlipperManager
+from .screen import Screen
+from .layout import Layout
+from .style import Style
+from .dropdownOption import DropdownOption
+from .progress import make_progress_graph
+from .explanation import Explanation
 
 # Constants
 INCLUDE_TOP_X = [0, 99]

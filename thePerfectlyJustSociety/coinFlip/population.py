@@ -6,6 +6,7 @@ import sys
 
 # Third-Party
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -196,22 +197,43 @@ class Population(Sequence):
                  for i, p in enumerate(top_x_percentages[:-1])]
         return pd.DataFrame(stats)
 
-    def plot(self, t=0, title=''):
-        # stats = self.getStatsByTopX()
-        stats = self.getStatsByTopXRanges()
+    def getPeopleWithMoreThan(self, val):
+        return Population([i for i in self if i.money > val], parent=self)
 
-        df = stats.copy()
-        df['percent_population'] = df['percent_population'].apply(lambda x: round(x * 100, 2))
-        df['percent_wealth'] = df['percent_wealth'].apply(lambda x: round(x * 100, 2))
-
+    def plot(self, t=0, title='', kind='distribution', keepAx=False):
         if self._currentPlotAx:
-            self._currentPlotAx.clear()
+            if isinstance(self._currentPlotAx, np.ndarray):
+                for ax in self._currentPlotAx[0]:
+                    ax.clear()
+            else:
+                self._currentPlotAx.clear()
 
-        self._currentPlotAx = df.plot(x='top_x_percent_low', y='percent_wealth', kind='line', ax=self._currentPlotAx)
+        ax = self._currentPlotAx if keepAx else None
+        if kind == 'topXPercentRanges':
+            df = self.getStatsByTopXRanges()
+            x, y = 'top_x_percent_low', 'percent_wealth'
+            x_label = 'Top X Percent of Population (1% buckets)'
+            y_label = 'Percent of Total Wealth'
+            self._currentPlotAx = df.plot(x=x, y=y, kind='line', ax=ax)
+        elif kind == 'wealthPerPerson':
+            df = self.toDf(sortBy='money')
+            x, y = 'rank_by_money', 'money'
+            x_label = 'People (ranked by wealth)'
+            y_label = 'Total Wealth'
+            self._currentPlotAx = df.plot(x=x, y=y, kind='line', ax=ax)
+        elif kind == 'distribution':
+            df = self.toDf(sortBy='money')
+            x_label = 'Wealth'
+            y_label = 'Count'
+            self._currentPlotAx = df.hist('money', bins=len(self) // 100, ax=ax)
+            # plt.ylim([0, len(self) // 10])
+            # plt.xlim([0, self.getWealthiest(1)[0].money])
+        else:
+            raise Exception(f"Unknown kind: {kind}")
 
         plt.title(title)
-        plt.xlabel('Top X Percent of Population (1% buckets)')
-        plt.ylabel('Percent of Total Money')
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
         if t:
             plt.show(block=False)
             plt.pause(t)

@@ -2,10 +2,10 @@
 from dash import html, dcc
 
 # Custom
-from dropdownOption import DropdownOption
-from progress import make_progress_graph
-from style import Style
-from explanation import Explanation
+from .dropdownOption import DropdownOption
+from .progress import make_progress_graph
+from .style import Style
+from .explanation import Explanation
 
 
 class Layout:
