@@ -5,12 +5,10 @@ import uuid
 
 from app import FlipperManager, getUpdatedGraph, INCLUDE_TOP_X
 from pollableThread import PollableCoinFlipper
-from impz_logger.decorators import profile
 
 FLIPPER_PATH = Path('flipperCache/session_xyz/THE_BEST_FLIPPER.pickle')
 
 
-@profile()
 def update(set_progress, wealth_distribution_dropdown_value, history_dropdown_value, numCoinFlipClicks,
            num_flips, numResetClicks):
 

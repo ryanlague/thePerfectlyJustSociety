@@ -15,7 +15,6 @@ from fire import Fire
 # Custom
 from population import Population
 from flips import Flips, Flip
-from impz_logger.decorators import profile
 
 
 class History:
