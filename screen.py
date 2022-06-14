@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output, State
 from style import Style
 from dropdownOption import DropdownOption
 
-from coin_flip import CoinFlipper
+from coinFlip import CoinFlipper
 
 
 class Screen:

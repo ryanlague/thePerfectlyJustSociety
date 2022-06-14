@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from flask import request
 
-from coin_flip import CoinFlipper, Flips, Flip, History
+from coinFlip import CoinFlipper, Flips, Flip, History
 from population import Population
 
 
