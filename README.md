@@ -13,7 +13,7 @@ pip install .
 ## Usage
 
 ### Web App
-https://github.com/ryanlague/thePerfectlyJustSociety/blob/main/thePerfectlyJustSociety/examples/tpjs_webapp_example.gif
+![](https://github.com/ryanlague/thePerfectlyJustSociety/blob/main/thePerfectlyJustSociety/examples/tpjs_webapp_example.gif)
 ```bash
 python3 server.py  # Dash is running on http://127.0.0.1:8050/
 python3 server.py --port 8051  # Run on port 8051
