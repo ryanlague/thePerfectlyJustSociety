@@ -4,7 +4,6 @@ setup(
     name='thePerfectlyJustSociety',
     version='1.0.1',
     license='MIT',
-    description='An experiment in equality and equity',
     author='Ryan Lague',
     author_email='ryanlague@hotmail.com',
     packages=find_packages(),
