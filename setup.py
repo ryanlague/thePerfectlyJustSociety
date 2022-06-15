@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='thePerfectlyJustSociety',
-    version='1.0.0',
+    version='1.0.1',
     license='MIT',
     description='An experiment in equality and equity',
     author='Ryan Lague',

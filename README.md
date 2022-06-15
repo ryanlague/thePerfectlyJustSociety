@@ -4,6 +4,11 @@ The Perfectly Just Society is an experiment in equality and equity. It aims to s
 
 ## Installation
 
+###PyPI
+```bash
+    pip install thePerfectlyJustSociety
+```
+###GitHub
 ```bash
 clone https://github.com/ryanlague/thePerfectlyJustSociety.git
 cd thePerfectlyJustSociety
