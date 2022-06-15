@@ -4,7 +4,7 @@ The Perfectly Just Society is an experiment in equality and equity. It aims to s
 
 ## Installation
 
-###PyPI
+###PyPI (for use as a module)
 ```bash
     pip install thePerfectlyJustSociety
 ```
