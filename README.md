@@ -37,7 +37,7 @@ python3 cli.py
 python3 cli.py --numFlips=1000 --numPeople=1000 --startMoney=100 --dollarsPerFlip=1 --allowDebt --plot --plotEvery=100
 
 # Show a complete list of a parameters and exit
-python3 --help
+python3 cli.py --help
 ```
 
 ### As a module
