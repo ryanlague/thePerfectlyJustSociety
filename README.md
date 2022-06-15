@@ -11,6 +11,29 @@ pip install .
 ```
 
 ## Usage
+
+### Web App
+```bash
+python3 server.py  # Dash is running on http://127.0.0.1:8050/
+python3 server.py --port 8051  # Run on port 8051
+python3 server.py --help  # A full list of parameters
+
+```
+
+### CLI
+```bash
+# Runs some coin flips and displays a Pandas DataFrame of the results
+python3 cli.py
+
+# Runs 1000 coin flips over a population of 1000 people starting with $100 each. 
+# Each flip has a wager of $1 and we allow people to go into debt instead of stopping if they reach $0.
+# A plot will be displayed after every 100 flips
+python3 cli.py --numFlips=1000 --numPeople=1000 --startMoney=100 --dollarsPerFlip=1 --allowDebt --plot --plotEvery=100
+
+# Show a complete list of a parameters and exit
+python3 --help
+```
+
 ### As a module
 
 ```python
@@ -39,27 +62,6 @@ flipper.population.plot(
 
 ```
 
-### Web App
-```bash
-python3 server.py  # Dash is running on http://127.0.0.1:8050/
-python3 server.py --port 8051  # Run on port 8051
-python3 server.py --help  # A full list of parameters
-
-```
-
-### CLI
-```bash
-# Runs some coin flips and displays a Pandas DataFrame of the results
-python3 cli.py
-
-# Runs 1000 coin flips over a population of 1000 people starting with $100 each. 
-# Each flip has a wager of $1 and we allow people to go into debt instead of stopping if they reach $0.
-# A plot will be displayed after every 100 flips
-python3 cli.py --numFlips=1000 --numPeople=1000 --startMoney=100 --dollarsPerFlip=1 --allowDebt --plot --plotEvery=100
-
-# Show a complete list of a parameters and exit
-python3 --help
-```
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
