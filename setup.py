@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='thePerfectlyJustSociety',
-    version='1.0.1',
+    version='1.0.2',
     license='MIT',
     author='Ryan Lague',
     author_email='ryanlague@hotmail.com',
